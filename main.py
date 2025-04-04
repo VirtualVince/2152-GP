@@ -62,7 +62,7 @@ monster = Monster()
 hero_initial_cs = cs
 monster_initial_cs = mcs
 
-# Load XP data if available
+# Load XP data
 try:
     with open("save.txt", "r") as file:
         lines = file.readlines()
@@ -70,7 +70,7 @@ try:
             hero.level_system.load_data(lines[1].strip())
             print(f"    |    Welcome back! You are level {hero.level_system.level} with {hero.level_system.xp} XP.")
 
-            # Calculate total combat strength using integer division
+            # Calculate total combat strength
             level_bonus = hero.level_system.level // 2
             total_combat = hero_initial_cs + level_bonus
             print(
@@ -83,7 +83,7 @@ try:
             monster.combat_strength = monster_initial_cs
 
 except FileNotFoundError:
-    # New game - no level bonus
+    # in the case of a new game with no save data
     hero.combat_strength = hero_initial_cs
     monster.combat_strength = monster_initial_cs
 
@@ -135,6 +135,7 @@ hero.level_system.level = loaded_level
 if last_kills > 0:
     print(f"    |    Currently, you are Level {hero.level_system.level}, with {last_kills} total kills.")
 
+    #Adjust combat strength based on last winner
     if last_winner == "Hero":
         level_bonus = min(2, hero.level_system.level)
         print(f"    |    After your last victory, monsters grew stronger (+{level_bonus}) to monster combat scores.")
@@ -290,7 +291,7 @@ while not (0 <= num_dream_lvls <= 3):
 # --- Fight Sequence ---
 print("    ------------------------------------------------------------------")
 print("    |    You meet the monster. FIGHT!!")
-monster.determine_behavior(hero)  # Show initial behavior assessment
+monster.determine_behavior(hero)  # Show initial behavior
 
 while hero.health_points > 0 and monster.health_points > 0:
     print("    |", end="    ")
@@ -306,14 +307,14 @@ while hero.health_points > 0 and monster.health_points > 0:
         else:
             print("    |", end="    ")
             print("------------------------------------------------------------------")
-            monster.attack(hero)  # This will now show behavior
+            monster.attack(hero)
             if hero.health_points <= 0:
                 num_stars = 1
             else:
                 num_stars = 2
     else:
         print("    |", end="    ")
-        monster.attack(hero)  # This will now show behavior
+        monster.attack(hero)
         if hero.health_points <= 0:
             num_stars = 1
         else:

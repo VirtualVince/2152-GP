@@ -5,6 +5,7 @@ class Monster(Character):
     def __init__(self):
         super().__init__()
 
+    # Determines the behavior of the monster based on the hero's health points and experience, and the monster's health points
     def determine_behavior(self, hero):
         if hasattr(hero, 'level_system'):
             player_xp = hero.level_system.xp
