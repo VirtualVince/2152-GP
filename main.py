@@ -250,34 +250,51 @@ while hero.health_points > 0 and monster.health_points > 0:
     print("    |", end="    ")
     input("Roll to see who strikes first (Press Enter)")
     attack_roll = random.choice(small_dice_options)
+
     if attack_roll % 2 != 0:
         print("    |", end="    ")
         input("You strike (Press Enter)")
         hero.attack(monster)
+
         if monster.health_points <= 0:
-            num_stars = 3
+            if hero.health_points == 20:
+                num_stars = 4
+                print("    |    Perfect combo! Hero defeated the monster without taking damage.")
+            else:
+                num_stars = 3
+            break
         else:
             print("    |", end="    ")
             print("------------------------------------------------------------------")
             input("    |    The monster strikes (Press Enter)!!!")
             monster.attack(hero)
+
             if hero.health_points <= 0:
                 num_stars = 1
+                break
             else:
                 num_stars = 2
     else:
         print("    |", end="    ")
         input("The Monster strikes (Press Enter)")
         monster.attack(hero)
+
         if hero.health_points <= 0:
             num_stars = 1
+            break
         else:
             print("    |", end="    ")
             print("------------------------------------------------------------------")
             input("The hero strikes!! (Press Enter)")
             hero.attack(monster)
+
             if monster.health_points <= 0:
-                num_stars = 3
+                if hero.health_points == 20:
+                    num_stars = 4
+                    print("    |    Perfect combo! Hero defeated the monster without taking damage.")
+                else:
+                    num_stars = 3
+                break
             else:
                 num_stars = 2
 
@@ -285,6 +302,7 @@ if monster.health_points <= 0:
     winner = "Hero"
 else:
     winner = "Monster"
+
 
 # --- Final Score Display and Hero Name Input ---
 tries = 0
