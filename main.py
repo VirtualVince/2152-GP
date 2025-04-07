@@ -57,8 +57,35 @@ if input_invalid:
 # --- Instantiate Hero and Monster Objects ---
 hero = Hero()
 monster = Monster()
-hero.combat_strength = cs
-monster.combat_strength = mcs
+
+# Store the initial combat strengths
+hero_initial_cs = cs
+monster_initial_cs = mcs
+
+# Load XP data
+try:
+    with open("save.txt", "r") as file:
+        lines = file.readlines()
+        if len(lines) > 1:  # If XP data exists
+            hero.level_system.load_data(lines[1].strip())
+            print(f"    |    Welcome back! You are level {hero.level_system.level} with {hero.level_system.xp} XP.")
+
+            # Calculate total combat strength
+            level_bonus = hero.level_system.level // 2
+            total_combat = hero_initial_cs + level_bonus
+            print(
+                f"    |    Because you are level {hero.level_system.level}, +{level_bonus} has been added to your combat strength.")
+            print(
+                f"    |    The hero's combat strength is now {total_combat}. (base {hero_initial_cs} + level bonus {level_bonus})")
+
+            # Set the actual combat strength
+            hero.combat_strength = total_combat
+            monster.combat_strength = monster_initial_cs
+
+except FileNotFoundError:
+    # in the case of a new game with no save data
+    hero.combat_strength = hero_initial_cs
+    monster.combat_strength = monster_initial_cs
 
 # --- Weapon Roll ---
 print("    |", end="    ")
@@ -77,31 +104,50 @@ ascii_image_weapon = """
             @&@           @&@
 """
 print(ascii_image_weapon)
+
 weapon_roll = random.choice(small_dice_options)
-# Adjust hero's combat strength based on weapon roll (max remains 6)
-hero.combat_strength = min(6, hero.combat_strength + weapon_roll)
+# Adjust hero's combat strength based on weapon roll (removed max of 6)
+hero.combat_strength += weapon_roll
 print("    |    The hero's weapon is " + str(weapons[weapon_roll - 1]))
 
-# --- Adjust Combat Strength Based on Previous Game ---
 def load_previous_game():
     try:
         with open("save.txt", "r") as file:
-            lines = file.readlines()
-            if lines:
-                return lines[-1].strip()
-    except FileNotFoundError:
-        return None
+            lines = [line.strip() for line in file.readlines()]
+            if not lines:
+                return 0, 0, 1, None  # (kills, xp, level, winner)
 
-last_game = load_previous_game()
-if last_game:
-    if "Hero" in last_game and "gained" in last_game:
-        print("    |    ... Increasing the monster's combat strength since you won so easily last time")
-        monster.combat_strength = min(6, monster.combat_strength + 1)
-    elif "Monster" in last_game:
-        print("    |    ... Increasing the hero's combat strength since you lost last time")
-        hero.combat_strength = min(6, hero.combat_strength + 1)
+            kills = int(lines[0]) if lines[0].isdigit() else 0
+            xp = int(lines[1].split(":")[1]) if len(lines) > 1 and "XP:" in lines[1] else 0
+            level = int(lines[2].split(":")[1]) if len(lines) > 2 and "LEVEL:" in lines[2] else 1
+            winner = lines[3].split(": ")[1] if len(lines) > 3 and "Won:" in lines[3] else None
+
+            return kills, xp, level, winner
+    except (FileNotFoundError, IndexError, ValueError):
+        return 0, 0, 1, None  # (kills, xp, level, winner)
+
+
+# --- Adjust Combat Strength Based on Previous Game ---
+last_kills, loaded_xp, loaded_level, last_winner = load_previous_game()
+hero.level_system.xp = loaded_xp
+hero.level_system.level = loaded_level
+
+if last_kills > 0:
+    print(f"    |    Currently, you are Level {hero.level_system.level}, with {last_kills} total kills.")
+
+    #Adjust combat strength based on last winner
+    if last_winner == "Hero":
+        level_bonus = min(2, hero.level_system.level)
+        print(f"    |    After your last victory, monsters grew stronger (+{level_bonus}) to monster combat scores.")
+        monster.combat_strength = monster.combat_strength + level_bonus
+        print(f"    |    The monster's new combat score is {monster.combat_strength}.")
+    elif last_winner == "Monster":
+        kill_bonus = min(2, last_kills // 3)
+        print(f"    |    After your last defeat, you trained harder. (+{kill_bonus}) to your combat score.")
+        hero.combat_strength = hero.combat_strength + kill_bonus
+        print(f"    |    Your new combat score is {hero.combat_strength}.")
     else:
-        print("    |    ... No changes in combat strength based on previous game.")
+        print("    |    The land remains balanced for your journey")
 
 # --- Weapon Roll Analysis ---
 print("    ------------------------------------------------------------------")
@@ -209,7 +255,7 @@ ascii_image_magic = """
 """
 print(ascii_image_magic)
 power_roll = random.choice(list(monster_powers.keys()))
-monster.combat_strength = min(6, monster.combat_strength + monster_powers[power_roll])
+monster.combat_strength = monster.combat_strength + monster_powers[power_roll] # removed cap of 6
 print("    |    The monster's combat strength is now " + str(monster.combat_strength) + " using the " + power_roll + " magic power")
 
 # --- Inception Dream (Recursive Function) ---
@@ -234,7 +280,7 @@ while not (0 <= num_dream_lvls <= 3):
         elif num_dream_lvls != 0:
             hero.health_points -= 1
             crazy_level = inception_dream(num_dream_lvls)
-            hero.combat_strength = min(6, hero.combat_strength + crazy_level)
+            hero.combat_strength = hero.combat_strength + crazy_level # removed cap of 6
             print("combat strength: " + str(hero.combat_strength))
             print("health points: " + str(hero.health_points))
     except ValueError:
@@ -242,14 +288,16 @@ while not (0 <= num_dream_lvls <= 3):
         num_dream_lvls = -1
     print("num_dream_lvls: ", num_dream_lvls)
 
-
 # --- Fight Sequence ---
 print("    ------------------------------------------------------------------")
 print("    |    You meet the monster. FIGHT!!")
+monster.determine_behavior(hero)  # Show initial behavior
+
 while hero.health_points > 0 and monster.health_points > 0:
     print("    |", end="    ")
     input("Roll to see who strikes first (Press Enter)")
     attack_roll = random.choice(small_dice_options)
+
     if attack_roll % 2 != 0:
         print("    |", end="    ")
         input("You strike (Press Enter)")
@@ -259,7 +307,6 @@ while hero.health_points > 0 and monster.health_points > 0:
         else:
             print("    |", end="    ")
             print("------------------------------------------------------------------")
-            input("    |    The monster strikes (Press Enter)!!!")
             monster.attack(hero)
             if hero.health_points <= 0:
                 num_stars = 1
@@ -267,7 +314,6 @@ while hero.health_points > 0 and monster.health_points > 0:
                 num_stars = 2
     else:
         print("    |", end="    ")
-        input("The Monster strikes (Press Enter)")
         monster.attack(hero)
         if hero.health_points <= 0:
             num_stars = 1
@@ -312,8 +358,8 @@ if not input_invalid:
     # --- Save Game Data ---
     try:
         with open("save.txt", "r") as file:
-            previous = file.readline().strip()
-            previous_kills = int(previous) if previous.isdigit() else 0
+            lines = file.readlines()
+            previous_kills = int(lines[0].strip()) if lines and lines[0].strip().isdigit() else 0
     except FileNotFoundError:
         previous_kills = 0
 
@@ -321,5 +367,8 @@ if not input_invalid:
         previous_kills += 1
 
     with open("save.txt", "w") as file:
-        file.write(str(previous_kills))
-    print("    |    Game saved. Total monsters defeated across games: " + str(previous_kills))
+        file.write(f"{previous_kills}\n")  # First line: kill count
+        file.write(f"XP:{hero.level_system.xp}\n")  # Second line: XP
+        file.write(f"LEVEL:{hero.level_system.level}\n")  # Third line: Level
+        file.write(f"Won: {winner}\n")  # Fourth line: Winner
+    print(f"    |    Game saved. Kills: {previous_kills} | Level: {hero.level_system.level}")
