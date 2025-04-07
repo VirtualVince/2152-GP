@@ -4,6 +4,7 @@ import os
 import platform
 from hero import Hero
 from monster import Monster
+TEST_COMBO = True
 
 # Print system details
 print(f"Operating System: {os.name}")
@@ -246,6 +247,15 @@ while not (0 <= num_dream_lvls <= 3):
 # --- Fight Sequence ---
 print("    ------------------------------------------------------------------")
 print("    |    You meet the monster. FIGHT!!")
+
+# --- For Testing Purposes ---
+if TEST_COMBO:
+    hero.health_points = 20
+    monster.health_points = 1
+    hero.combat_strength = 6
+    monster.combat_strength = 1
+    attack_roll = 1
+
 while hero.health_points > 0 and monster.health_points > 0:
     print("    |", end="    ")
     input("Roll to see who strikes first (Press Enter)")
