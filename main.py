@@ -256,6 +256,8 @@ if TEST_COMBO:
     monster.combat_strength = 1
     attack_roll = 1
 
+monster.determine_behavior(hero)  # Show initial behavior
+
 while hero.health_points > 0 and monster.health_points > 0:
     print("    |", end="    ")
     input("Roll to see who strikes first (Press Enter)")
