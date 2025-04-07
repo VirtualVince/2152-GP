@@ -4,6 +4,7 @@ import os
 import platform
 from hero import Hero
 from monster import Monster
+TEST_COMBO = True
 
 # Print system details
 print(f"Operating System: {os.name}")
@@ -291,6 +292,15 @@ while not (0 <= num_dream_lvls <= 3):
 # --- Fight Sequence ---
 print("    ------------------------------------------------------------------")
 print("    |    You meet the monster. FIGHT!!")
+
+# --- For Testing Purposes ---
+if TEST_COMBO:
+    hero.health_points = 20
+    monster.health_points = 1
+    hero.combat_strength = 6
+    monster.combat_strength = 1
+    attack_roll = 1
+    
 monster.determine_behavior(hero)  # Show initial behavior
 
 while hero.health_points > 0 and monster.health_points > 0:
@@ -302,28 +312,44 @@ while hero.health_points > 0 and monster.health_points > 0:
         print("    |", end="    ")
         input("You strike (Press Enter)")
         hero.attack(monster)
+
         if monster.health_points <= 0:
-            num_stars = 3
+            if hero.health_points == 20:
+                num_stars = 4
+                print("    |    Perfect combo! Hero defeated the monster without taking damage.")
+            else:
+                num_stars = 3
+            break
         else:
             print("    |", end="    ")
             print("------------------------------------------------------------------")
             monster.attack(hero)
+
             if hero.health_points <= 0:
                 num_stars = 1
+                break
             else:
                 num_stars = 2
     else:
         print("    |", end="    ")
         monster.attack(hero)
+
         if hero.health_points <= 0:
             num_stars = 1
+            break
         else:
             print("    |", end="    ")
             print("------------------------------------------------------------------")
             input("The hero strikes!! (Press Enter)")
             hero.attack(monster)
+
             if monster.health_points <= 0:
-                num_stars = 3
+                if hero.health_points == 20:
+                    num_stars = 4
+                    print("    |    Perfect combo! Hero defeated the monster without taking damage.")
+                else:
+                    num_stars = 3
+                break
             else:
                 num_stars = 2
 
@@ -331,6 +357,7 @@ if monster.health_points <= 0:
     winner = "Hero"
 else:
     winner = "Monster"
+
 
 # --- Final Score Display and Hero Name Input ---
 tries = 0
